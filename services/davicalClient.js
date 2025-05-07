@@ -104,8 +104,68 @@ async function getEvent(filename) {
     return await res.text(); // retourne le contenu `.ics`
 }
 
+/**
+ * Delete an event by its filename
+ */
+async function deleteEventByFilename(filename) {
+    const res = await fetch(`${DAVICAL_URL}${filename}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': 'Basic ' + btoa(`${USERNAME}:${PASSWORD}`)
+        }
+    });
+
+    if (!res.ok) {
+        throw new Error(`Failed to delete ${filename}: ${res.status} ${res.statusText}`);
+    }
+
+    console.log(`🗑️ Event ${filename} deleted successfully.`);
+}
+
+/**
+ * Update an existing event (by filename)
+ */
+async function updateEventByFilename(filename, {uid, title, description, full_description, start, end, icon, color}) {
+    const calendar = new ICalCalendar();
+
+    // Utilise le même UID que le fichier (en extrayant de filename ou à injecter côté frontend)
+
+    const event = calendar.createEvent({
+        uid,
+        start: new Date(start),
+        end: new Date(end),
+        summary: title,
+        description,
+        location: 'Depuis React',
+    });
+
+    if (icon) event.x('X-ICON', icon);
+    if (full_description) event.x('X-FULL-DESCRIPTION', full_description);
+    if (color) event.x('X-COLOR', color);
+
+    const icsData = calendar.toString();
+
+    const response = await fetch(`${DAVICAL_URL}${filename}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'text/calendar; charset=utf-8',
+            'Authorization': 'Basic ' + btoa(`${USERNAME}:${PASSWORD}`)
+        },
+        body: icsData
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to update ${filename}: ${response.status} ${response.statusText}`);
+    }
+
+    console.log(`🔄 Event ${filename} updated successfully.`);
+}
+
+
 module.exports = {
     createEvent,
     listAll,
-    getEvent
+    getEvent,
+    deleteEventByFilename,
+    updateEventByFilename
 };
