@@ -10,8 +10,8 @@ const { parseICSEvents } = require('../utils/icsParser');
  */
 router.post('/', async (req, res) => {
     try {
-        await createEvent(req.body);
-        res.status(201).json({ message: 'Event created successfully!' });
+        const filename = await createEvent(req.body);
+        res.status(201).json({ message: 'Event created successfully!', 'filename': filename }); 
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error while creating the event.' });

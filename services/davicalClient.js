@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+
 const { ICalCalendar } = require('ical-generator');
 const btoa = require('btoa');
 const { parseStringPromise } = require('xml2js');
@@ -8,12 +9,14 @@ const DAVICAL_URL = process.env.DAVICAL_URL;
 const USERNAME = process.env.DAVICAL_USERNAME;
 const PASSWORD = process.env.DAVICAL_PASSWORD;
 
+const { v4: uuidv4 } = require('uuid');
 /**
  * Create a new calendar event and upload it to DAViCal as an ICS file
  */
 async function createEvent({ title, description, full_description, start, end, icon, color }) {
     const calendar = new ICalCalendar();
-    const uid = `event-${Date.now()}@app.local`;
+    const uuid = uuidv4();
+    const uid = `${uuid}@app.local`;
 
     const event = calendar.createEvent({
         uid,
@@ -44,6 +47,7 @@ async function createEvent({ title, description, full_description, start, end, i
     }
 
     console.log("✅ Event successfully published!");
+    return filename;
 }
 
 
@@ -127,8 +131,6 @@ async function deleteEventByFilename(filename) {
  */
 async function updateEventByFilename(filename, {uid, title, description, full_description, start, end, icon, color}) {
     const calendar = new ICalCalendar();
-
-    // Utilise le même UID que le fichier (en extrayant de filename ou à injecter côté frontend)
 
     const event = calendar.createEvent({
         uid,
