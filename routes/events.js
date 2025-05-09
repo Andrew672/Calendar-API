@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createEvent, listAll, getEvent } = require('../services/davicalClient');
+const { createEvent, listAll, getEvent, deleteEventByFilename } = require('../services/davicalClient');
 const { parseICSEvents } = require('../utils/icsParser');
 
 /**
@@ -10,8 +10,8 @@ const { parseICSEvents } = require('../utils/icsParser');
  */
 router.post('/', async (req, res) => {
     try {
-        await createEvent(req.body);
-        res.status(201).json({ message: 'Event created successfully!' });
+        const filename = await createEvent(req.body);
+        res.status(201).json({ message: 'Event created successfully!', 'filename': filename }); 
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error while creating the event.' });
@@ -54,5 +54,39 @@ router.get('/json', async (_req, res) => {
         res.status(500).json({ message: 'Error while parsing events.' });
     }
 });
+
+/**
+ * DELETE /api/events/:filename
+ * Delete an event by its filename
+ */
+router.delete('/:filename', async (req, res) => {
+    const { filename } = req.params;
+    try {
+        await deleteEventByFilename(filename);
+        res.status(200).json({ message: `Event ${filename} deleted successfully!` });
+    } catch (err) {
+        console.error(err);
+        res.status(404).json({ message: `File ${filename} not found.` });
+    }
+});
+
+const { updateEventByFilename } = require('../services/davicalClient');
+
+/**
+ * PUT /api/events/update/:filename
+ * Update an event by its filename
+ */
+router.put('/:filename', async (req, res) => {
+    const { filename } = req.params;
+
+    try {
+        await updateEventByFilename(filename, req.body);
+        res.status(200).json({ message: `Event ${filename} updated successfully.` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: `Error updating event ${filename}.` });
+    }
+});
+
 
 module.exports = router;
